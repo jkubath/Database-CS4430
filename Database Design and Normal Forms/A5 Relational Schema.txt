@@ -1,0 +1,30 @@
+Name: Jonah Kubath
+Class: 4430 Assigment 5 #2
+
+Relational schema normalization
+
+1. 	candidate key - B
+	Normal Form - 2 NF
+	R1(B, C) and R2(C, D, A)
+
+2. 	candidate key - B and D
+	Normal Form - 1 NF	
+	R1(B, C) and R2(D, A)
+
+3.	candidate key - B, C, and D
+	Normal Form - 3 NF
+	//R1(D, A) R2(ABC)
+	No BCNF decomp
+
+4.	candidate key - A
+	Normal Form - 2 NF
+	R1(A, B, C) R2(BC, D)
+
+//Look at candidate keys
+5. 	candidate key - AB
+	Normal Form - 1 NF
+	R1(AB, C, D)
+
+
+
+

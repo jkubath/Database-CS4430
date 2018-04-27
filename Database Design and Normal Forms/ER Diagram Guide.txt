@@ -1,0 +1,56 @@
+ER Diagram Guide
+
+**Starting with student and moving clockwise around the diagram**
+
+address_r (Student to Address)
+	many-to-many
+	1. Student must have one permanent address and one non-permanent address
+	2. An address could have multiple students at it
+
+phone_number_r (Student to Phone)
+	one to many
+	1. One student can have many phones
+	2. A phone can only be used by one student
+
+home_department (Student to department)
+	many to many
+	1. many students to one department
+	2. many departments for a student (double major)
+
+Student IS A people
+
+instructor_r (department to people)
+	many to one
+	1. a department can have many instructors
+	2. an instructor can only work in one department
+
+section_instruct (people to section)
+	many to one
+	1. an instructor can teach multiple sections
+	2. a section only has one instructor
+
+course_r (section to course)
+	many to one
+	1. a section can only have one course
+	2. a course can have many sections
+
+course IN department
+	many to many
+	1. many courses in one department
+	2. the same course id can be in many departments
+
+enrolled_in (course to student)
+	many to many
+	1. a course can have many students
+	2. a student can be in many courses
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,185 @@
+CREATE TABLE people (
+	WIN int,
+	f_name varchar(100),
+	l_name varchar(100),
+
+	PRIMARY KEY(WIN)
+);
+
+
+CREATE TABLE student (
+	WIN int,
+	birthdate date,
+	sex bit,
+	level varchar(100),
+	major varchar(4),
+	department varchar(4),
+
+	PRIMARY KEY(WIN),
+	FOREIGN KEY(department) REFERENCES department(code),
+	FOREIGN KEY(WIN) REFERENCES people(WIN)
+
+);
+
+CREATE TABLE address (
+	WIN int,
+	street varchar(100),
+	city varchar(100),
+	state varchar(2),
+	zipcode decimal(9, 0),
+	permanent bit,
+
+	PRIMARY KEY(WIN, permanent),
+	FOREIGN KEY(WIN) REFERENCES student(WIN)
+
+);
+
+CREATE TABLE phone (
+	phone varchar(20),
+	permanent bit,
+	WIN int,
+
+	PRIMARY KEY(WIN, permanent),
+	FOREIGN KEY(WIN) REFERENCES student(WIN)
+
+);
+
+CREATE TABLE department (
+	college varchar(100),
+	office_phone varchar(100),
+	room varchar(20),
+	main_building varchar(100),
+	name varchar(100),
+	code varchar(4),
+	PRIMARY KEY(code)
+);
+
+CREATE TABLE instructor (
+	WIN int,
+	department varchar(4),
+
+	PRIMARY KEY(WIN),
+	FOREIGN KEY(department) REFERENCES department(code),
+	FOREIGN KEY(WIN) REFERENCES people(WIN)
+
+);
+
+CREATE TABLE course (
+	number int,
+	name varchar(100),
+	description varchar(300),
+	credit int(1),
+	department varchar(4),
+
+	PRIMARY KEY(number, department),
+	FOREIGN KEY(department) REFERENCES department(code),
+
+
+);
+
+CREATE TABLE enrolled_in (
+	WIN int,
+	grade varchar(2),
+	course_number int,
+
+	PRIMARY KEY(WIN, course_number),
+	FOREIGN KEY(WIN) REFERENCES student(WIN),
+	FOREIGN KEY(course_number) REFERENCES course(number)
+);
+
+CREATE TABLE section (
+	section int,
+	semester varchar(10),
+	year int(4),
+	course int,
+	instructor int,
+
+	PRIMARY KEY(section),
+	FOREIGN KEY(course) REFERENCES course(number),
+	FOREIGN KEY(instructor) REFERENCES instructor(WIN)
+
+);
+
+CREATE TABLE address_r (
+	WIN int,
+	permanent bit,
+	address char(20),
+
+	PRIMARY KEY(WIN, permanent),
+	FOREIGN KEY(WIN) REFERENCES student(WIN)
+);
+
+CREATE TABLE phone_number_r (
+	WIN int,
+	permanent bit,
+	phone char(20),
+
+	PRIMARY KEY(WIN, permanent),
+	FOREIGN KEY(WIN) REFERENCES student(WIN)
+);
+
+CREATE TABLE home_department(
+	WIN int,
+	department char(4),
+
+	PRIMARY KEY(WIN, department),
+	FOREIGN KEY(WIN) REFERENCES student(WIN),
+	FOREIGN KEY(department) REFERENCES department(code)
+);
+
+CREATE TABLE course_department (
+	course int,
+	department char(4),
+
+	PRIMARY KEY(course, department)
+	FOREIGN KEY(course) REFERENCES course(number),
+	FOREIGN KEY(department) REFERENCES department(code)
+);
+
+CREATE TABLE instruct_r (
+	WIN int,
+	department char(4),
+
+	PRIMARY KEY(WIN),
+	FOREIGN KEY(WIN) REFERENCES people(WIN)
+);
+
+CREATE TABLE section_instructor ( 
+	WIN int,
+	section int,
+
+	PRIMARY KEY(section),
+	FOREIGN KEY(section) REFERENCES section(section),
+	FOREIGN KEY(WIN) REFERENCES people(WIN)
+);
+
+CREATE TABLE course_r (
+	section int,
+	course int,
+
+	PRIMARY KEY(section),
+	FOREIGN KEY(section) REFERENCES section(section)
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

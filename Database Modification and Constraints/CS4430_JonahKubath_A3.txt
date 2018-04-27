@@ -1,0 +1,276 @@
+Jonah Kubath
+CS4430 A3
+March 12, 2018
+
+
+PART 1: SQL Database ModificationDatabase 1: A computer database schema consists of four relations, whose schemas are:Product (maker, model, type)PC (model, speed, ram, hdisk, price)Laptop (model, speed, ram, hdisk, screen, price)Printer (model, color, type, price)
+
+1. Using two INSERT statements, store in the database the fact that PC model 1100 is made by manufacturer C, has speed 3.2, RAM 1024, hard disk 180, and sells for $2499.
+
+INSERT INTO Product (maker, model, type) VALUES ('C', 1100, 'PC');
+INSERT INTO PC (model, speed, ram, hdisk, price) VALUES (1100, 3.2, 1024, 180, 2499);
+
+2. Insert the facts that for every PC there is a laptop with the same manufacturer, speed, RAM, and hard disk, a 17-inch screen, a model number 1100 greater, and a price $500 more.
+
+INSERT INTO Laptop (model, speed, ram, hdisk, screen, price) SELECT (model, speed, ram, hdisk, 17, 500) FROM PC;
+3. Delete all PC ’s with less than 100 gigabytes of hard disk.
+
+DELETE FROM PC WHERE hdisk < 100;
+4. Delete all laptops made by a manufacturer that doesn’t make printers.
+
+DELETE FROM Laptop WHERE model IN (SELECT DISTINCT model FROM Product WHERE type = 'laptop' 
+AND maker NOT IN (SELECT DISTINCT maker FROM Product WHERE type = 'Printer'));
+5. Manufacturer A buys manufacturer B. Change all products made by B so they are now made by A.
+
+UPDATE Product SET maker = 'A' WHERE maker = 'B';
+6. For each PC, double the amount of RAM and add 60 gigabytes to the amount of hard disk.
+
+UPDATE PC SET hdisk = (hdisk + 60), ram = (ram * 2); 
+7. For each laptop made by manufacturer B, add one inch to the screen size and subtract $100 from the price.
+
+UPDATE laptop SET screen = (screen + 1), price = (price - 100) WHERE model IN (SELECT model FROM product WHERE type = 'laptop' AND maker = 'B');
+
+
+
+Database 2: Here is another database schema concerning World War II capital ships. It involves the following relations:Classes (class, type, country, guns, bore, displacement)Ships (name, class, launched)Battles (name, bdate)Outcomes (ship, battle, result)Write the following database modifications in SQL, based on the above database schema.
+
+
+
+8. The two British battleships of the Nelson class — Nelson and Rodney — were both launched in 1927, had nine 16-inch guns, and a displacement of 34,000 tons. Insert these facts into the database.
+
+INSERT INTO Classes (class, type, country, guns, bore, displacement) VALUES ('Nelson', 'bb', 'British', 9, 16, 34000);
+INSERT INTO Ships (name, class, launched) VALUES ('Nelson', 
+                                                  (SELECT DISTINCT class FROM classes 
+                                                   WHERE class = 'Nelson'), 1927),
+						('Rodney', 
+                                                  (SELECT DISTINCT class FROM classes 
+                                                   WHERE class = 'Nelson'), 1927);
+
+9. Two of the three battleships of the Italian Vittorio Veneto class — Vittorio Veneto and Italia — were launched in 1940; the third ship of that class, Roma, was launched in 1942. Each had nine 15-inch guns and a displacement of 41,000 tons. Insert these facts into the database.
+
+INSERT INTO Classes 
+(class, type, country, guns, bore, displacement) VALUES 
+('Vittorio Veneto', 'bb', 'Italian', 9, 15, 41000);
+
+INSERT INTO Ships 
+(name, class, launched) VALUES 
+('Vittorio Veneto',(SELECT DISTINCT class FROM classes WHERE class = 'Vittorio Veneto'), 1940),
+('Italia', (SELECT DISTINCT class FROM classes WHERE class = 'Vittorio Veneto'), 1940),
+('Roma', (SELECT DISTINCT class FROM classes WHERE class = 'Vittorio Veneto'), 1942);
+
+10. Delete from Ships all ships sunk in battle.
+
+DELETE FROM Ships WHERE name IN (SELECT ship FROM outcomes WHERE result = 'sunk');
+
+11. Modify the Classes relation so that gun bores are measured in centimeters (one inch = 2.54 centimeters) and displacements are measured in metric tons (one metric ton = 1.1 tons). (Note: you may have to change the data type of bore and displacement accordingly.)
+
+ALTER TABLE classes MODIFY bore decimal(5, 2);
+ALTER TABLE classes MODIFY displacement decimal(7, 1);
+UPDATE classes SET bore = (bore * 2.54), displacement = (displacement * 1.1);
+12. Delete all classes with fewer than three ships. (Note: This deletion may be rejected due to violation to foreign key constraints).
+
+DELETE FROM classes WHERE class IN (SELECT DISTINCT S1.class FROM ships S1, ships S2, ships S3 WHERE S1.name != S2.name AND S2.name != S3.name AND S1.name != S3.name AND S1.class = S2.class AND S2.class = S3.class)
+
+Part 2
+
+13. When inserting a new printer, check that the model number exists in Product.
+
+delimiter //
+create trigger t3 before insert on printer
+for each row
+begin
+if not exists (select * from product where product.model = new.model) then
+signal sqlstate '45000' set message_text = 'Model not found.';
+end if;
+end;//
+delimiter ;
+
+14. When updating the price of a PC, check that there is no lower priced PC with the same speed.
+
+DELIMITER //
+create trigger t2
+before update on pc
+for each row
+BEGIN
+if not exists (select * from PC WHERE speed = NEW.speed AND price < NEW.price) then
+SIGNAL SQLSTATE '45000' 
+	set message_text = 'Other price is lower.';
+end if;
+END;//
+DELIMITER ;
+
+
+15. When making any modification to the Laptop relation, check that the average price of laptops for each manufacturer is at least $1500.
+
+DELIMITER //
+CREATE TRIGGER myTrigger2
+AFTER UPDATE on laptop
+FOR EACH ROW
+BEGIN
+IF NOT EXISTS
+(SELECT * FROM
+	(SELECT * FROM Product, Laptop WHERE Product.model = Laptop.model) P1
+WHERE AVG(P1.price) < 1500 GROUP BY P1.maker)
+THEN
+SIGNAL SQLSTATE '45000' 
+	set message_text = 'Maker average price is too low';
+END IF;
+END;// 
+DELIMITER ;
+
+16. When updating the RAM or hard disk of any PC, check that the updated PC has at least 100 times as much hard disk as RAM.
+
+DELIMITER //
+CREATE TRIGGER myTrigger AFTER UPDATE ON PC
+FOR EACH ROW
+BEGIN
+ if NEW.ram <=> OLD.ram OR NEW.hdisk <=> OLD.hdisk THEN
+	if NEW.hdisk < (100 * NEW.ram) THEN
+		signal sqlstate '45000' set message_text = 'hdisk is too low';
+END IF;
+END IF;
+END;//
+DELIMITER ;
+
+17. When inserting a new PC, laptop, or printer, make sure that the model number did not previously appear in any of PC, Laptop, or Printer.
+
+delimiter //
+create trigger t3 before insert on printer
+for each row
+begin
+if not exists (select * from printer where printer.model = new.model) then
+signal sqlstate '45000' set message_text = 'Model previously found.';
+end if;
+end;//
+delimiter ;
+
+delimiter //
+create trigger t4 before insert on laptop
+for each row
+begin
+if not exists (select * from laptop WHERE laptop.model = new.model) then
+signal sqlstate '45000' set message_text = 'Model previously found.';
+end if;
+end;//
+delimiter ;
+
+delimiter //
+create trigger t5 before insert on pc
+for each row
+begin
+if not exists (select * from pc where pc.model = new.model) then
+signal sqlstate '45000' set message_text = 'Model previously found.';
+end if;
+end;//
+delimiter ;
+
+
+DATABASE 2
+18. When a new class is inserted into Classes, also insert a ship with the name of that class and a NULL launch date.
+
+delimiter //
+create trigger t1 after insert on Classes
+for each row
+begin
+INSERT INTO SHIPS (name, class, launched) VALUES (NEW.class, NEW.class, NULL);
+end;//
+delimiter ;
+
+19. When a new class is inserted with a displacement greater than 35,000 tons, allow the insertion, but change the displacement to 35,000.
+
+delimiter //
+create trigger t2 before insert on Classes
+for each row
+begin
+if new.displacement > 35000 then
+	set new.displacement = 35000;
+end if;
+end;//
+delimiter ;
+
+20. If a tuple is inserted into Outcomes, check that the ship and battle are listed in Ships and Battles, respectively, and if not, insert tuples into one or both of these relations, with NULL components where necessary.
+
+delimiter //
+create trigger t3 after insert on Outcomes
+for each row
+begin
+if NOT EXISTS (SELECT * FROM Ships, Outcomes WHERE NEW.ship = Ships.name) then
+	INSERT INTO Ships (name) VALUES (NEW.ship);
+end if;
+if NOT EXISTS (SELECT * FROM Battles, Outcomes WHERE NEW.ship = Battles.name) then
+	INSERT INTO Battles (name) VALUES (NEW.battle);
+end if;
+end;//
+delimiter ;
+
+21. When there is an insertion into Ships or an update of the class attribute of Ships, check that no country has more than 20 ships.
+
+delimiter //
+create trigger t4 before insert on Ships
+for each row
+begin
+if NOT EXISTS (SELECT * FROM Classes, Ships WHERE Classes.class = Ships.class AND COUNT(ships) > 20 GROUP BY country) then
+	signal sqlstate '45000' set message_text = 'Country has more than 20 ships.';
+
+end if;
+end;//
+delimiter ;
+
+delimiter //
+create trigger t4 before update on Ships
+for each row
+begin
+if OLD.class <=> NEW.class then
+	if NOT EXISTS (SELECT * FROM Classes, Ships WHERE Classes.class = Ships.class AND COUNT(ships) > 20 GROUP BY country) then
+		signal sqlstate '45000' set message_text = 'Country has more than 20 ships.';
+
+end if;
+end if;
+end;//
+delimiter ;
+
+22. Check, under all circumstances that could cause a violation, that no ship fought in a battle that was at a later date than another battle in which that ship was sunk.
+
+delimiter //
+create trigger t5 before insert on Outcomes
+for each row
+begin
+DECLARE battleDate date;
+SET battleDate = (SELECT MAX(bdate) FROM Battles WHERE new.battle = Battles.name);
+if EXISTS (SELECT * FROM Battles, Outcomes WHERE Battles.name = Outcomes.battle AND Outcomes.ship = new.ship AND Outcomes.result = 'sunk' AND Battles.date < battleDate) then
+	signal sqlstate '45000' set message_text = 'Ship was previously sunk';
+end if;
+end;//
+delimiter ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
